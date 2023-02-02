@@ -5,7 +5,7 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use App\Services\BelinkCurl;
 
-class BelinkScraper extends Command
+class ScratchBelink extends Command
 {
 
     /**
