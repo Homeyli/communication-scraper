@@ -2,8 +2,10 @@
 
 namespace App\Providers;
 
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\ServiceProvider;
 
+use App\Services\BelinkCurl;
 class AppServiceProvider extends ServiceProvider
 {
     /**
@@ -13,7 +15,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        //
+        App::bind(BelinkCurl::class,function($app) {
+            return new BelinkCurl;
+        });
     }
 
     /**
