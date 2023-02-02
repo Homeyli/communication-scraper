@@ -7,13 +7,22 @@ class BelinkCurl {
     protected $apilink = 'https://server.belink.ir/api/search/profile';
     protected $originurl = 'https://belink.ir';
     protected $authserver = 'server.belink.ir';
-    protected $fakedata = '{"type":"COMPANY","value":"","limit":10,"offset":1,"filters":null,"seo":false}';
+    //protected $data = '{"type":"COMPANY","value":"","limit":10,"offset":1,"filters":null,"seo":false}';
+    protected $data = [
+        'type' => 'COMPANY',
+        'value' => '',
+        'limit' => 1,
+        'offset' => 0,
+        'filters' => null,
+        'seo' => false,
+    ];
+
     protected $authkey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImhvbWVpbHlAZ21haWwuY29tIiwidXNlcklkIjoiNjNkYWI4YzFhNDQ4NWIxNWYzOTUxMmRjIiwidHlwZSI6Ik5PUk1BTCIsImlhdCI6MTY3NTI3ODU5NSwiZXhwIjoxNjc1MzY0OTk1fQ.wiIaN4vukQKt5O1HW3aovAYwSGH_l9j8GgO30ilRRQI";
 
     protected function call ($data=null) {
 
         if(is_null($data)) {
-            $data = $this->fakedata;
+            $data = $this->data;
         }
 
         $curl = curl_init();
@@ -26,7 +35,7 @@ class BelinkCurl {
             CURLOPT_TIMEOUT => 30000,
             CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
             CURLOPT_CUSTOMREQUEST => "POST",
-            CURLOPT_POSTFIELDS => $data,
+            CURLOPT_POSTFIELDS => json_encode($data),
             CURLOPT_HTTPHEADER => [
                 // Set here requred headers
                 'authority: ' . $this->authserver,
@@ -59,4 +68,6 @@ class BelinkCurl {
 
         return $this->call();
     }
+
+
 }
