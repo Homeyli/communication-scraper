@@ -15,6 +15,9 @@ return new class extends Migration
     {
         Schema::create('communication_details', function (Blueprint $table) {
             $table->id();
+            $table->integer('communication_id');
+            $table->string('key',255);
+            $table->text('value')->nullable();
             $table->timestamps();
         });
     }

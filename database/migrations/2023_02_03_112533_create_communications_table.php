@@ -15,6 +15,12 @@ return new class extends Migration
     {
         Schema::create('communications', function (Blueprint $table) {
             $table->id();
+            $table->enum('type',['company','person']);
+            $table->string('uniqid')->unique();
+            $table->string('slug')->nullable();
+            $table->string('name')->nullable();
+            $table->string('description')->nullable();
+            $table->string('source',255)->nullable();
             $table->timestamps();
         });
     }
