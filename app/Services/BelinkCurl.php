@@ -61,6 +61,17 @@ class BelinkCurl {
 
     }
 
+    private function convert_num ($string) {
+        $persian = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+        $arabic = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+    
+        $num = range(0, 9);
+        $convertedPersianNums = str_replace($persian, $num, $string);
+        $englishNumbersOnly = str_replace($arabic, $num, $convertedPersianNums);
+        
+        return $englishNumbersOnly;
+    }
+
     protected function createData($type = 'COMPANY',$value='',$limit=1,$offset=0,$filters=null,$seo=null) {
 
         return [
@@ -94,14 +105,80 @@ class BelinkCurl {
 
     protected function getCompanyDetails ($_company) {
 
+        $_details = (array)$this->find(slug: $_company->nameId->value);
+
+        if (filter_var($_details['logo'], FILTER_VALIDATE_URL)) {
+            $_details['imagehash'] = str_replace('https://server.belink.ir/images/','',$_details['logo']);
+        }
+        
+        $_parse_url = parse_url($_details['url']);
+        if ($_parse_url['host'] == $this->domain) {
+            unset($_details['url']);
+        }
+
+        if(isset($_details['telephone'])) {
+            $_details['telephone'] = $this->convert_num($_details['telephone']);
+        }
+
+        if (isset($_details['url'])) {
+            $generated_email = 'info@' . $_parse_url['host'];
+            if (@$_details['email'] != $generated_email) {
+                $_details['generated_email'] = $generated_email;
+            }
+        }
+
+        if (isset($_details['location'])) {
+
+            foreach ($_details['location'] as $key => $value) {
+                $_details['location'][$key] = $value->streetAddress;
+            }
+        }
+
+        if (isset($_details['employee'])) {
+
+            foreach ($_details['employee'] as $key => $value) {
+                $_details['employee'][$key] = $value->name;
+            }
+        }
+
+        if (isset($_details['founders'])) {
+
+            foreach ($_details['founders'] as $key => $value) {
+                $_details['founders'][$key] = $value->name;
+            }
+        }
+
+        if (isset($_details['foundingDate']) && (is_null($_details['foundingDate']) || empty($_details['foundingDate']))) {
+            unset($_details['foundingDate']);
+        }
+
+        if (isset($_details['dissolutionDate']) && (is_null($_details['dissolutionDate']) || empty($_details['dissolutionDate']))) {
+            unset($_details['dissolutionDate']);
+        }
+
+        if (isset($_details['sameAs'])) {
+            $_details['social'] = $_details['sameAs'];
+            unset($_details['sameAs']);
+        }
+
+        unset($_details['@context']);
+        unset($_details['@type']);
+        unset($_details['@id']);
+        unset($_details['name']);
+        unset($_details['knowsAbout']);
+        unset($_details['areaServed']);
+        unset($_details['image']);
+        unset($_details['logo']);
+        unset($_details['description']);
+
+        
         $company = [
             'uniqid' => $_company->_id,
             'slug' => $_company->nameId->value,
             'name' => @$_company->overview->shortDescription->value,
             'description' => @$_company->overview->longDescription->value,
-            'other' => $this->find(slug: $_company->nameId->value)
+            'details' => $_details
         ];
-
 
 
         return $company;

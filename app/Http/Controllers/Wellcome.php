@@ -25,8 +25,30 @@ class Wellcome extends Controller
     protected $authkey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImhvbWVpbHlAZ21haWwuY29tIiwidXNlcklkIjoiNjNkYWI4YzFhNDQ4NWIxNWYzOTUxMmRjIiwidHlwZSI6Ik5PUk1BTCIsImlhdCI6MTY3NTM3NTE5MywiZXhwIjoxNjc1NDYxNTkzfQ.RAWCNtJTgpAmpv86XOK8FFkJBXzwdi-40d1ukSZ7-hw";
 
 
+    private function convert_num ($string) {
+        $persian = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+        $arabic = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+    
+        $num = range(0, 9);
+        $convertedPersianNums = str_replace($persian, $num, $string);
+        $englishNumbersOnly = str_replace($arabic, $num, $convertedPersianNums);
+        
+        return $englishNumbersOnly;
+    }
+
     public function __invoke(BelinkCurl $sraper)
     {
+
+        die($this->convert_num('۰۵۱۹۱۰۹۲۵۹'));
+        $url = 'https://server.belink.ir/images/63ccf670a75c2bad4c7be7a6';
+
+        print_r(parse_url($url));die();
+
+        if (filter_var($url, FILTER_VALIDATE_URL)) {
+            die('is valid');
+        } else {
+            die('is not valid');
+        }
 
 
         // $curl = curl_init();
