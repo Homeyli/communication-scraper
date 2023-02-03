@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use PhpQuery\PhpQuery;
+use App\Models\Communication;
+use App\Models\CommunicationDetail;
 
 class BelinkCurl {
 
@@ -95,10 +97,15 @@ class BelinkCurl {
             jsontype: false
         );
 
-        $pq = new PhpQuery;
-        $pq->load_str($_content);
-        $dom = $pq->query('script[type=application/ld+json]');
-        $_json_string = $pq->innerHTML($dom[2]);
+        if (!empty($_content)) {
+            $pq = new PhpQuery;
+            $pq->load_str($_content);
+            $dom = $pq->query('script[type=application/ld+json]');
+            $_json_string = $pq->innerHTML($dom[2]);
+        } else {
+
+            echo ("\n$link\n");
+        }
 
         return json_decode($_json_string);
     }
@@ -106,25 +113,40 @@ class BelinkCurl {
     protected function getCompanyDetails ($_company) {
 
         $_details = (array)$this->find(slug: $_company->nameId->value);
+        //print_r($_company);print_r($_details);die();
+        if (isset($_details['logo']) || isset($_details['image'])) {
 
-        if (filter_var($_details['logo'], FILTER_VALIDATE_URL)) {
-            $_details['imagehash'] = str_replace('https://server.belink.ir/images/','',$_details['logo']);
-        }
-        
-        $_parse_url = parse_url($_details['url']);
-        if ($_parse_url['host'] == $this->domain) {
-            unset($_details['url']);
-        }
+            if (isset($_details['logo'])) 
+                $imgKey = 'logo';
+
+            if (isset($_details['image'])) 
+            $imgKey = 'image';
+
+            if (filter_var($_details[$imgKey], FILTER_VALIDATE_URL)) {
+                $_details['imagehash'] = str_replace('https://server.belink.ir/images/','',$_details[$imgKey]);
+            }
+        }   
 
         if(isset($_details['telephone'])) {
             $_details['telephone'] = $this->convert_num($_details['telephone']);
         }
 
         if (isset($_details['url'])) {
-            $generated_email = 'info@' . $_parse_url['host'];
-            if (@$_details['email'] != $generated_email) {
-                $_details['generated_email'] = $generated_email;
+
+            $_parse_url = parse_url($_details['url']);
+            if ($_parse_url['host'] == $this->domain) {
+                unset($_details['url']);
+            } else {
+            
+                $generated_email = 'info@' . $_parse_url['host'];
+                if (@$_details['email'] != $generated_email) {
+                    $_details['generated_email'] = $generated_email;
+                }
             }
+        }
+
+        if (isset($_details['email'])) {
+            $_details['email'] = trim(urldecode($_details['email']));
         }
 
         if (isset($_details['location'])) {
@@ -148,6 +170,13 @@ class BelinkCurl {
             }
         }
 
+        if (isset($_details['funder'])) {
+
+            foreach ($_details['funder'] as $key => $value) {
+                $_details['funder'][$key] = $value->name;
+            }
+        }
+
         if (isset($_details['foundingDate']) && (is_null($_details['foundingDate']) || empty($_details['foundingDate']))) {
             unset($_details['foundingDate']);
         }
@@ -161,6 +190,7 @@ class BelinkCurl {
             unset($_details['sameAs']);
         }
 
+       
         unset($_details['@context']);
         unset($_details['@type']);
         unset($_details['@id']);
@@ -175,7 +205,7 @@ class BelinkCurl {
         $company = [
             'uniqid' => $_company->_id,
             'slug' => $_company->nameId->value,
-            'name' => @$_company->overview->shortDescription->value,
+            'name' => @$_company->overview->companyName,
             'description' => @$_company->overview->longDescription->value,
             'details' => $_details
         ];
@@ -213,17 +243,54 @@ class BelinkCurl {
             array_push($companies,$this->getCompanyDetails($company));
         }
 
-        print_r($companies);die();
+        return $companies;
     }
 
 
+    public function storeCompany ($companies) {
 
-    public function getCompanies () {
+        foreach ($companies as $company) {
 
-        
-        $data = $this->getLimitCompanies();
-        die($data->result->totalDocs . 't');
+            //print_r($company);//die();
+            // create communication record
+            $communication = Communication::create([
+                'type' => 'company',
+                'uniqid' => $company['uniqid'],
+                'slug' => $company['slug'],
+                'name' => $company['name'],
+                'description' => $company['description'],
+                'source' => $this->domain,
+            ]);
+
+            foreach ($company['details'] as $key => $details) {
+
+                if (is_array($details)) {
+                    foreach ($details as $value) {
+                        CommunicationDetail::create([
+                            'communication_id' => $communication->id,
+                            'key' => $key,
+                            'value' => $value
+                        ]);
+                    }
+                } else {
+
+                    CommunicationDetail::create([
+                        'communication_id' => $communication->id,
+                        'key' => $key,
+                        'value' => $details
+                    ]);
+
+                }
+
+            } 
+        }
     }
+
+
+    // public function getCompanies () {
+
+    //     $data = $this->getLimitCompanies();
+    // }
 
 
 

@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('uniqid')->unique();
             $table->string('slug')->nullable();
             $table->string('name')->nullable();
-            $table->string('description')->nullable();
+            $table->text('description')->nullable();
             $table->string('source',255)->nullable();
             $table->timestamps();
         });

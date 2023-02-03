@@ -41,26 +41,30 @@ class ScratchBelink extends Command
 
         $this->companyCount = $scraper->getCompaniesCount();
 
-        $limit = 20;
+        $limit = 100;
         $intrator = 0;
         $offset = 0;
+
         $executionTime = (int)($this->companyCount / $limit);
 
         while($intrator <= $executionTime) {
             
 
             $limit = $executionTime == $intrator ? ($this->companyCount % $limit) : $limit;
-            $this->error("limit $limit offset $offset");
+            $this->info("limit $limit & offset $offset");
+            $this->info("getting $limit data");
 
-
-            $data = $scraper->getLimitCompanies(
+            $companies = $scraper->getLimitCompanies(
                 limit: $limit,
                 offset: $offset
             );
 
-            print_r($data);
-            die();
+            $this->info("scraping $limit data done!");
+            $this->info("starting store $limit data in database ..");
 
+            $scraper->storeCompany($companies);
+
+            $this->info("stored $limit data in database!");
 
             $offset += $limit;
             $intrator++;
