@@ -14,6 +14,8 @@ class ScratchBelink extends Command
      * @var string
      */
 
+    protected $companyCount = 0;
+
     protected $signature = 'scratch:belink';
 
     /**
@@ -33,7 +35,41 @@ class ScratchBelink extends Command
     public function handle(BelinkCurl $scraper)
     {
 
-        die($scraper->testcall());
+        // get first 50 companies
+
+        $this->info('start get count of data..');
+
+        $this->companyCount = $scraper->getCompaniesCount();
+
+        $limit = 20;
+        $intrator = 0;
+        $offset = 0;
+        $executionTime = (int)($this->companyCount / $limit);
+
+        while($intrator <= $executionTime) {
+            
+
+            $limit = $executionTime == $intrator ? ($this->companyCount % $limit) : $limit;
+            $this->error("limit $limit offset $offset");
+
+
+            $data = $scraper->getLimitCompanies(
+                limit: $limit,
+                offset: $offset
+            );
+
+            print_r($data);
+            die();
+
+
+            $offset += $limit;
+            $intrator++;
+            
+        }
+        
+        
+
+        //$this->error();
         return Command::SUCCESS;
     }
 }
